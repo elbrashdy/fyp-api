@@ -44,4 +44,11 @@ class AuthController extends Controller
 
         return $this->success([], 'Register successfull');
     }
+
+    public function logout(Request $request): JsonResponse
+    {
+        $user = $request->user();
+        $user->tokens()->where('id', $user->currentAccessToken()->id)->delete();
+        return $this->success([], 'Logout successfull');
+    }
 }

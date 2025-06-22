@@ -11,11 +11,8 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('readings', function (Blueprint $table) {
-            $table->id();
-            $table->float('temperature')->nullable();
-            $table->float('ph_value')->nullable();
-            $table->timestamps();
+        Schema::table('users', function (Blueprint $table) {
+            $table->text('fcm_token')->nullable();
         });
     }
 
@@ -24,6 +21,8 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('readings');
+        Schema::table('users', function (Blueprint $table) {
+            //
+        });
     }
 };

@@ -11,10 +11,10 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('readings', function (Blueprint $table) {
+        Schema::create('notifications', function (Blueprint $table) {
             $table->id();
-            $table->float('temperature')->nullable();
-            $table->float('ph_value')->nullable();
+            $table->string('title');
+            $table->longText('message');
             $table->timestamps();
         });
     }
@@ -24,6 +24,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('readings');
+        Schema::dropIfExists('notifications');
     }
 };

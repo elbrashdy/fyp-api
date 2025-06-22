@@ -1,6 +1,8 @@
 <?php
 
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\NotificationController;
+use App\Http\Controllers\SensorReadingController;
 use App\Models\Reading;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -39,16 +41,21 @@ Route::controller(AuthController::class)
     });
 
 
-Route::middleware(['auth:sanctum', 'auth:user'])->group(function () {
-    Route::post('/logout', 'logout');
-    Route::post('/record', function (Request $request) {
-        Reading::create([
-            'temperature' => $request->input('temperature'),
-            'ph' => $request->input('ph'),
-        ]);
+Route::middleware(['auth:sanctum'])->group(function () {
+    Route::post('auth/logout', [AuthController::class, 'logout']);
 
-        return response()->json([
-            'message' => 'Data Saved!'
-        ]);
+    Route::controller(NotificationController::class)
+        ->prefix('notifications')
+        ->group(function () {
+        Route::get('get-recent', 'getRecentNotifications');
+        Route::post('save-token', 'saveNotificationToken');
     });
+
 });
+
+Route::controller(SensorReadingController::class)->group(function () {
+    Route::post('/sensor-listener', 'store');
+});
+
+
+
