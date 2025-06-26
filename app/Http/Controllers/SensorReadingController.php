@@ -12,6 +12,12 @@ use Illuminate\Support\Facades\Log;
 
 class SensorReadingController extends Controller
 {
+
+    public function index()
+    {
+        $latestReadings = Reading::latest()->take(30)->get()->reverse()->values();
+        return $latestReadings;
+    }
     public function store(Request $request): JsonResponse
     {
         $request->validate([
@@ -55,10 +61,33 @@ class SensorReadingController extends Controller
         Log::info($users);
 
         foreach ($users as $user) {
+            $title = '';
             $body = '';
 
-            if ($tempAlert) $body = "Temperature Alert: $temperature °C";
-            if ($phAlert) $body = "pH Alert: $ph";
+            if ($tempAlert && $phAlert) {
+                $title = 'Temperature & pH Alert';
+
+                $tempMessage = $temperature > 33
+                    ? "Temperature rose to {$temperature}°C"
+                    : "Temperature dropped to {$temperature}°C";
+
+                $phMessage = $ph > 9.3
+                    ? "pH rose to {$ph}"
+                    : "pH dropped to {$ph}";
+
+                $body = "{$tempMessage}. {$phMessage}.";
+            } elseif ($tempAlert) {
+                $title = 'Temperature Alert';
+                $body = $temperature > 33
+                    ? "Temperature rose to {$temperature}°C"
+                    : "Temperature dropped to {$temperature}°C";
+            } elseif ($phAlert) {
+                $title = 'pH Alert';
+                $body = $ph > 9.3
+                    ? "pH rose to {$ph}"
+                    : "pH dropped to {$ph}";
+            }
+
 
             $response = Http::withToken($this->getFirebaseAccessToken())
                 ->withHeaders([
@@ -68,7 +97,7 @@ class SensorReadingController extends Controller
                     'message' => [
                         'token' => $user->fcm_token,
                         'notification' => [
-                            'title' => 'Hi there',
+                            'title' => $title,
                             'body' => $body,
                         ],
                         'android' => [

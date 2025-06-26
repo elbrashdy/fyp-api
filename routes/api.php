@@ -51,6 +51,8 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::post('save-token', 'saveNotificationToken');
     });
 
+    Route::get('readings', [SensorReadingController::class, 'index']);
+
 });
 
 Route::controller(SensorReadingController::class)->group(function () {
