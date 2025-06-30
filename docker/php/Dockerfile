@@ -34,4 +34,4 @@ COPY docker/php/supervisord.conf /etc/supervisord.conf
 RUN mkdir -p /var/log/supervisor
 
 
-CMD ["/usr/bin/supervisord", "-c", "/var/www/supervisord.conf"]
+CMD ["/usr/bin/supervisord", "-c", "/etc/supervisord.conf"]
