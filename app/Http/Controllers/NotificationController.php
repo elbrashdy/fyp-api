@@ -33,13 +33,4 @@ class NotificationController extends Controller
         return response()->json(['message' => 'Token saved']);
     }
 
-//    public function saveToken(Request $request) {
-//        Cache::put('fcm', [
-//            'user_id' => '1',
-//            'fcm_token' => $request->fcm_token
-//        ]);
-//
-//        return response()->json(['success' => true]);
-//    }
-
 }

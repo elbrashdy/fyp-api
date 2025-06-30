@@ -2,21 +2,22 @@
 
 namespace App\Http\Controllers;
 
+use App\Jobs\SendNotificationJob;
+use App\Jobs\SendReadingJob;
 use App\Models\Reading;
-use App\Models\User;
+use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\DB;
 
 class SensorReadingController extends Controller
 {
 
-    public function index()
+    public function index(): JsonResponse
     {
         $latestReadings = Reading::latest()->take(30)->get()->reverse()->values();
-        return $latestReadings;
+        return $this->success($latestReadings, '');
     }
     public function store(Request $request): JsonResponse
     {
@@ -31,7 +32,7 @@ class SensorReadingController extends Controller
         $last = Cache::get('last_reading');
 
         if ($request->temp_alert || $request->ph_alert) {
-            $this->sendAlertNotification($temperature, $ph, $request->temp_alert, $request->ph_alert);
+            SendNotificationJob::dispatch($temperature, $ph, $request->temp_alert, $request->ph_alert);
         }
 
 
@@ -46,7 +47,7 @@ class SensorReadingController extends Controller
                 'ph_value' => $ph
             ]);
 
-            event(new \App\Events\SensorReadingUpdated($reading));
+            SendReadingJob::dispatch($reading);
 
             return response()->json(['status' => 'new reading saved']);
         }
@@ -54,96 +55,33 @@ class SensorReadingController extends Controller
         return response()->json(['status' => 'duplicate ignored']);
     }
 
-    private function sendAlertNotification($temperature, $ph, $tempAlert, $phAlert)
+
+
+
+    public function weeklyHistory(): JsonResponse
     {
-        $users = User::whereNotNull('fcm_token')->get();
+        $readings = DB::table('readings')
+            ->selectRaw("
+            DATE(DATE_SUB(created_at, INTERVAL (WEEKDAY(created_at) + 1) % 7 DAY)) as week_start,
+            AVG(temperature) as average_temperature,
+            AVG(ph_value) as average_ph
+        ")
+            ->groupBy('week_start')
+            ->orderByDesc('week_start')
+            ->get();
 
-        Log::info($users);
+        $formatted = $readings->map(function ($item) {
+            $start = Carbon::parse($item->week_start)->startOfDay();
+            $end = $start->copy()->addDays(6);
 
-        foreach ($users as $user) {
-            $title = '';
-            $body = '';
+            return [
+                'week' => $start->format('d F') . ' to ' . $end->format('d F') . ' of ' . $start->format('Y'),
+                'average_temperature' => round($item->average_temperature, 2),
+                'average_ph' => round($item->average_ph, 2),
+            ];
+        });
 
-            if ($tempAlert && $phAlert) {
-                $title = 'Temperature & pH Alert';
-
-                $tempMessage = $temperature > 33
-                    ? "Temperature rose to {$temperature}°C"
-                    : "Temperature dropped to {$temperature}°C";
-
-                $phMessage = $ph > 9.3
-                    ? "pH rose to {$ph}"
-                    : "pH dropped to {$ph}";
-
-                $body = "{$tempMessage}. {$phMessage}.";
-            } elseif ($tempAlert) {
-                $title = 'Temperature Alert';
-                $body = $temperature > 33
-                    ? "Temperature rose to {$temperature}°C"
-                    : "Temperature dropped to {$temperature}°C";
-            } elseif ($phAlert) {
-                $title = 'pH Alert';
-                $body = $ph > 9.3
-                    ? "pH rose to {$ph}"
-                    : "pH dropped to {$ph}";
-            }
-
-
-            $response = Http::withToken($this->getFirebaseAccessToken())
-                ->withHeaders([
-                    'Content-Type' => 'application/json',
-                ])
-                ->post("https://fcm.googleapis.com/v1/projects/fish-pond-dd2d4/messages:send", [
-                    'message' => [
-                        'token' => $user->fcm_token,
-                        'notification' => [
-                            'title' => $title,
-                            'body' => $body,
-                        ],
-                        'android' => [
-                            'priority' => 'high',
-                            'notification' => [
-                                'sound' => 'default'
-                            ]
-                        ],
-                        'apns' => [
-                            'payload' => [
-                                'aps' => [
-                                    'sound' => 'default'
-                                ]
-                            ]
-                        ]
-                    ]
-                ]);
-        }
-
-    }
-
-    function getFirebaseAccessToken(): string
-    {
-        $credentials = json_decode(file_get_contents(storage_path('app/firebase/firebase_credentials.json')), true);
-
-        $now = time();
-        $header = base64_encode(json_encode(['alg' => 'RS256', 'typ' => 'JWT']));
-        $claim = base64_encode(json_encode([
-            'iss' => $credentials['client_email'],
-            'scope' => 'https://www.googleapis.com/auth/firebase.messaging',
-            'aud' => $credentials['token_uri'],
-            'exp' => $now + 3600,
-            'iat' => $now
-        ]));
-
-        $data = $header . '.' . $claim;
-        openssl_sign($data, $signature, $credentials['private_key'], OPENSSL_ALGO_SHA256);
-        $jwt = $data . '.' . base64_encode($signature);
-
-        // Get the access token
-        $response = Http::asForm()->post($credentials['token_uri'], [
-            'grant_type' => 'urn:ietf:params:oauth:grant-type:jwt-bearer',
-            'assertion' => $jwt,
-        ]);
-
-        return $response->json()['access_token'];
+        return $this->success($formatted, '');
     }
 
 

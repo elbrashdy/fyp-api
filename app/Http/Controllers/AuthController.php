@@ -51,4 +51,28 @@ class AuthController extends Controller
         $user->tokens()->where('id', $user->currentAccessToken()->id)->delete();
         return $this->success([], 'Logout successfull');
     }
+
+    /**
+     * @throws ValidationException
+     */
+    public function changePassword(Request $request): JsonResponse
+    {
+        $user = $request->user();
+
+        $this->validate($request, [
+            'current_password' => 'required',
+            'password' => 'required|min:8|confirmed',
+        ]);
+
+        // Check current password
+        if (!Hash::check($request->input('current_password'), $user->password)) {
+            return $this->error('Password is incorrect!', 401);
+        }
+
+        // Update password
+        $user->password = Hash::make($request->input('password'));
+        $user->save();
+
+        return $this->success([], 'Password changed successfull');
+    }
 }

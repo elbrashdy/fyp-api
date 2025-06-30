@@ -43,6 +43,7 @@ Route::controller(AuthController::class)
 
 Route::middleware(['auth:sanctum'])->group(function () {
     Route::post('auth/logout', [AuthController::class, 'logout']);
+    Route::post('/change-password', [AuthController::class, 'changePassword']);
 
     Route::controller(NotificationController::class)
         ->prefix('notifications')
@@ -51,7 +52,12 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::post('save-token', 'saveNotificationToken');
     });
 
-    Route::get('readings', [SensorReadingController::class, 'index']);
+    Route::controller(SensorReadingController::class)->prefix('readings')->group(function () {
+        Route::get('', 'index');
+        Route::get('history', 'weeklyHistory');
+    });
+
+
 
 });
 

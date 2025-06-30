@@ -31,7 +31,7 @@ class SensorReadingUpdated implements ShouldBroadcast
         return [
             'reading' => [
                 'temperature' => $this->reading['temperature'],
-                'ph_value' => $this->reading['ph_value'],
+                'ph_value' => $this->reading['ph_value']
             ]
         ];
     }
