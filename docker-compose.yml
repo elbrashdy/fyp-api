@@ -37,6 +37,7 @@ services:
     queue:
         build:
             context: .
+            dockerfile: docker/php/Dockerfile
         container_name: laravel_queue
         working_dir: /var/www
         command: php artisan queue:work --verbose --tries=3 --timeout=90
