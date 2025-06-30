@@ -31,6 +31,5 @@ RUN chown -R www-data:www-data /var/www \
 
 RUN mkdir -p /var/log/supervisor
 
-CMD ["php-fpm"]
 
 CMD ["/usr/bin/supervisord", "-c", "/var/www/supervisord.conf"]
