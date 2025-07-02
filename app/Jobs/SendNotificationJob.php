@@ -79,7 +79,7 @@ class SendNotificationJob implements ShouldQueue
 
             Notification::create([
                 'title' => $title,
-                'body' => $body,
+                'message' => $body,
             ]);
 
 
