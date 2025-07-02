@@ -2,6 +2,7 @@
 
 namespace App\Jobs;
 
+use App\Models\Notification;
 use App\Models\User;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -75,6 +76,11 @@ class SendNotificationJob implements ShouldQueue
                     ? "pH rose to {$ph}"
                     : "pH dropped to {$ph}";
             }
+
+            Notification::create([
+                'title' => $title,
+                'body' => $body,
+            ]);
 
 
             $response = Http::withToken($this->getFirebaseAccessToken())
