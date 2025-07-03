@@ -6,6 +6,7 @@ use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\ValidationException;
 
 class UserController extends Controller
 {
@@ -36,5 +37,21 @@ class UserController extends Controller
         ]);
 
         return $this->success($user, 'Register successfull');
+    }
+
+    /**
+     * @throws ValidationException
+     */
+    public function changeUserPassword(Request $request, $id): JsonResponse
+    {
+        $this->validate($request, [
+            'password' => 'required|min:8',
+        ]);
+
+        $user = User::find($id);
+        $user->password = Hash::make($request->input('password'));
+        $user->save();
+
+        return $this->success($user, 'Change password successfull');
     }
 }

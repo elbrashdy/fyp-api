@@ -50,6 +50,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
         ->group(function(){
             Route::get('/', 'index');
             Route::post('/', 'store');
+            Route::put('/{id}/change-password', 'changeUserPassword');
         });
 
     Route::controller(NotificationController::class)
