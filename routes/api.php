@@ -3,6 +3,7 @@
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\SensorReadingController;
+use App\Http\Controllers\UserController;
 use App\Models\Reading;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -36,7 +37,6 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 
 Route::controller(AuthController::class)
     ->prefix('auth')->group(function(){
-        Route::post('/register', 'register');
         Route::post('/login', 'login');
     });
 
@@ -44,6 +44,13 @@ Route::controller(AuthController::class)
 Route::middleware(['auth:sanctum'])->group(function () {
     Route::post('auth/logout', [AuthController::class, 'logout']);
     Route::post('/change-password', [AuthController::class, 'changePassword']);
+
+    Route::controller(UserController::class)
+        ->prefix('users')
+        ->group(function(){
+            Route::get('/', 'index');
+            Route::post('/', 'store');
+        });
 
     Route::controller(NotificationController::class)
         ->prefix('notifications')

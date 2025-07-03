@@ -15,7 +15,7 @@ class NotificationController extends Controller
 
     public function getRecentNotifications(Request $request): JsonResponse
     {
-        $notification = Notification::where('created_at', '>=', Carbon::now()->subDays(7))->get();
+        $notification = Notification::where('created_at', '>=', Carbon::now()->subDays(2))->orderBy('created_at', 'desc')->get();
         return $this->success($notification, 'Recently notifications');
     }
     public function saveNotificationToken(Request $request): JsonResponse

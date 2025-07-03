@@ -13,7 +13,6 @@ use Illuminate\Support\Facades\DB;
 
 class SensorReadingController extends Controller
 {
-
     public function index(): JsonResponse
     {
         $latestReadings = Reading::latest()->take(30)->get()->reverse()->values();
@@ -31,8 +30,8 @@ class SensorReadingController extends Controller
 
         $last = Cache::get('last_reading');
 
-        if ($request->temp_alert || $request->ph_alert) {
-            SendNotificationJob::dispatch($temperature, $ph, $request->temp_alert, $request->ph_alert);
+        if ($request->temperature_alert || $request->ph_alert) {
+            SendNotificationJob::dispatch($temperature, $ph, $request->temperature_alert, $request->ph_alert);
         }
 
 

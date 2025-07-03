@@ -34,16 +34,6 @@ class AuthController extends Controller
         ], 'Login successfull');
     }
 
-    public function register(Request $request): JsonResponse
-    {
-        User::create([
-            'name' => $request->input('name'),
-            'email' => $request->input('email'),
-            'password' => Hash::make($request->input('password')),
-        ]);
-
-        return $this->success([], 'Register successfull');
-    }
 
     public function logout(Request $request): JsonResponse
     {
